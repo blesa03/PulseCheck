@@ -22,4 +22,8 @@ urlpatterns = [
         "api/auth/",
         include("users.urls"),
     ),
+    path(
+        "api/",
+        include("monitors.urls"),
+    ),
 ]
