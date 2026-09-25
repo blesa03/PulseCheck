@@ -13,6 +13,15 @@ def env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+
+    if value is None:
+        return default
+
+    return int(value)
+
+
 def env_list(name: str, default: str = "") -> list[str]:
     value = os.getenv(name, default)
 
@@ -123,6 +132,51 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 AUTH_USER_MODEL = "users.User"
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "users.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
+
+JWT_SIGNING_KEY = os.getenv(
+    "JWT_SIGNING_KEY",
+    SECRET_KEY,
+)
+
+JWT_ALGORITHM = "HS256"
+
+JWT_ISSUER = "pulsecheck"
+JWT_AUDIENCE = "pulsecheck-api"
+
+JWT_ACCESS_TOKEN_LIFETIME_SECONDS = env_int(
+    "JWT_ACCESS_TOKEN_LIFETIME_SECONDS",
+    900,
+)
+
+JWT_REFRESH_TOKEN_LIFETIME_SECONDS = env_int(
+    "JWT_REFRESH_TOKEN_LIFETIME_SECONDS",
+    2592000,
+)
+
+JWT_REFRESH_COOKIE_NAME = "pulsecheck_refresh"
+
+JWT_REFRESH_COOKIE_SECURE = env_bool(
+    "JWT_REFRESH_COOKIE_SECURE",
+    not DEBUG,
+)
+
+JWT_REFRESH_COOKIE_SAMESITE = os.getenv(
+    "JWT_REFRESH_COOKIE_SAMESITE",
+    "Lax",
+)
+
+JWT_REFRESH_COOKIE_PATH = "/api/auth/"
 
 
 CORS_ALLOWED_ORIGINS = env_list(
