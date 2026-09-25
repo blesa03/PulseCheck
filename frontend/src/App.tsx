@@ -1,81 +1,77 @@
-import { useEffect, useState } from 'react'
+import {
+  Navigate,
+  Route,
+  Routes,
+} from 'react-router-dom'
+
+import {
+  PublicOnly,
+  RequireAuth,
+} from './auth/AuthGuards'
+
+import {
+  DashboardPage,
+} from './pages/DashboardPage'
+
+import {
+  LoginPage,
+} from './pages/LoginPage'
+
+import {
+  RegisterPage,
+} from './pages/RegisterPage'
 
 import './App.css'
 
-type ApiState = 'checking' | 'connected' | 'unavailable'
-
-const API_URL =
-  import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
 function App() {
-  const [apiState, setApiState] =
-    useState<ApiState>('checking')
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    fetch(`${API_URL}/health/`, {
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(
-            `Health check failed with ${response.status}`,
-          )
-        }
-
-        return response.json()
-      })
-      .then(() => {
-        setApiState('connected')
-      })
-      .catch((error: unknown) => {
-        if (
-          error instanceof DOMException &&
-          error.name === 'AbortError'
-        ) {
-          return
-        }
-
-        setApiState('unavailable')
-      })
-
-    return () => {
-      controller.abort()
-    }
-  }, [])
-
-  const apiMessage = {
-    checking: 'Checking API connection…',
-    connected: 'API connected',
-    unavailable: 'API unavailable',
-  }[apiState]
-
   return (
-    <main className="app-shell">
-      <section className="foundation-card">
-        <p className="eyebrow">Service monitoring</p>
+    <Routes>
+      <Route
+        element={<PublicOnly />}
+      >
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
 
-        <h1>PulseCheck</h1>
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
+      </Route>
 
-        <p className="description">
-          Foundation ready. Monitoring comes next.
-        </p>
+      <Route
+        element={<RequireAuth />}
+      >
+        <Route
+          path="/dashboard"
+          element={<DashboardPage />}
+        />
+      </Route>
 
-        <div
-          className={`api-status api-status--${apiState}`}
-          role="status"
-        >
-          <span
-            className="status-dot"
-            aria-hidden="true"
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to="/dashboard"
+            replace
           />
+        }
+      />
 
-          {apiMessage}
-        </div>
-      </section>
-    </main>
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
+      />
+    </Routes>
   )
 }
+
 
 export default App

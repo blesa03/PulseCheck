@@ -1,10 +1,13 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from core.views import health_check, readiness_check
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path(
+        "admin/",
+        admin.site.urls,
+    ),
     path(
         "api/health/",
         health_check,
@@ -14,5 +17,9 @@ urlpatterns = [
         "api/health/ready/",
         readiness_check,
         name="readiness",
+    ),
+    path(
+        "api/auth/",
+        include("users.urls"),
     ),
 ]
