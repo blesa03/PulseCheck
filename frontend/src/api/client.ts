@@ -58,7 +58,7 @@ export function subscribeToAuthSession(
 }
 
 
-async function readErrorMessage(
+export async function readApiErrorMessage(
   response: Response,
 ): Promise<string> {
   try {
@@ -116,7 +116,7 @@ async function authRequest(
 
   if (!response.ok) {
     throw new ApiError(
-      await readErrorMessage(response),
+      await readApiErrorMessage(response),
       response.status,
     )
   }
