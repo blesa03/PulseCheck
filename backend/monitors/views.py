@@ -8,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from monitors.models import Monitor
 from monitors.serializers import (
     CheckResultSerializer,
+    IncidentSerializer,
     MonitorSerializer,
 )
 from monitors.services.checks import (
@@ -119,12 +120,38 @@ class MonitorViewSet(ModelViewSet):
                 {
                     "detail": ("Paused monitors cannot be checked."),
                 },
-                status=(status.HTTP_409_CONFLICT),
+                status=status.HTTP_409_CONFLICT,
             )
 
         return Response(
-            CheckResultSerializer(
-                check_result,
-            ).data,
+            {
+                "check_result": CheckResultSerializer(
+                    check_result,
+                ).data,
+                "monitor": MonitorSerializer(
+                    monitor,
+                ).data,
+            },
             status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+    )
+    def incidents(
+        self,
+        request,
+        pk=None,
+    ):
+        monitor = self.get_object()
+
+        serializer = IncidentSerializer(
+            monitor.incidents.all(),
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
         )

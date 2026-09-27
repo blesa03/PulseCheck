@@ -336,10 +336,13 @@ def test_check_now_endpoint_executes_owned_monitor(
 
     assert response.status_code == 201
 
-    assert response.data["result"] == ("SUCCESS")
+    assert response.data["check_result"]["result"] == "SUCCESS"
 
-    assert response.data["http_status"] == 200
-    assert response.data["response_time_ms"] == 42
+    assert response.data["check_result"]["http_status"] == 200
+
+    assert response.data["check_result"]["response_time_ms"] == 42
+
+    assert response.data["monitor"]["id"] == monitor.pk
 
 
 @pytest.mark.django_db

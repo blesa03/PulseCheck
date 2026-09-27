@@ -238,3 +238,74 @@ class CheckResult(models.Model):
 
     def __str__(self):
         return f"{self.monitor.name}: {self.result} at {self.checked_at}"
+
+
+class Incident(models.Model):
+    monitor = models.ForeignKey(
+        Monitor,
+        on_delete=models.CASCADE,
+        related_name="incidents",
+    )
+
+    started_at = models.DateTimeField(
+        default=timezone.now,
+    )
+
+    resolved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-started_at",
+            "-id",
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "monitor",
+                    "-started_at",
+                ],
+            ),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "monitor",
+                ],
+                condition=models.Q(
+                    resolved_at__isnull=True,
+                ),
+                name="one_open_incident_per_monitor",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        resolved_at__isnull=True,
+                    )
+                    | models.Q(
+                        resolved_at__gte=models.F(
+                            "started_at",
+                        ),
+                    )
+                ),
+                name="incident_resolution_after_start",
+            ),
+        ]
+
+    @property
+    def duration_seconds(self) -> int:
+        finished_at = self.resolved_at or timezone.now()
+
+        return max(
+            0,
+            int((finished_at - self.started_at).total_seconds()),
+        )
+
+    def __str__(self):
+        state = "open" if self.resolved_at is None else "resolved"
+
+        return f"{self.monitor.name}: {state} incident"
