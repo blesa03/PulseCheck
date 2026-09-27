@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from monitors.models import (
     CheckResult,
+    Incident,
     Monitor,
 )
 
@@ -242,6 +243,27 @@ class CheckResultSerializer(
             "response_time_ms",
             "error_type",
             "checked_at",
+        )
+
+        read_only_fields = fields
+
+
+class IncidentSerializer(
+    serializers.ModelSerializer,
+):
+    duration_seconds = serializers.IntegerField(
+        read_only=True,
+    )
+
+    class Meta:
+        model = Incident
+
+        fields = (
+            "id",
+            "monitor",
+            "started_at",
+            "resolved_at",
+            "duration_seconds",
         )
 
         read_only_fields = fields

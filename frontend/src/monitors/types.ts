@@ -98,3 +98,8 @@ export interface CheckResult {
 
   checked_at: string
 }
+
+export interface MonitorCheckResponse {
+  check_result: CheckResult
+  monitor: Monitor
+}

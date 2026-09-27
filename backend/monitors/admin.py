@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from monitors.models import (
     CheckResult,
+    Incident,
     Monitor,
 )
 
@@ -59,4 +60,29 @@ class CheckResultAdmin(admin.ModelAdmin):
         "response_time_ms",
         "error_type",
         "checked_at",
+    )
+
+
+@admin.register(Incident)
+class IncidentAdmin(admin.ModelAdmin):
+    list_display = (
+        "monitor",
+        "started_at",
+        "resolved_at",
+        "duration_seconds",
+    )
+
+    list_filter = ("resolved_at",)
+
+    search_fields = (
+        "monitor__name",
+        "monitor__url",
+        "monitor__owner__email",
+    )
+
+    readonly_fields = (
+        "monitor",
+        "started_at",
+        "resolved_at",
+        "duration_seconds",
     )

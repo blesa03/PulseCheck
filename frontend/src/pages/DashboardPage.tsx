@@ -49,7 +49,7 @@ function monitorStatusLabel(
     DEGRADED: 'Degraded',
     DOWN: 'Down',
     PAUSED: 'Paused',
-  }[monitor.status]
+  }[monitor.status] ?? 'Pending'
 }
 
 
@@ -120,10 +120,12 @@ export function DashboardPage() {
 
     void listMonitors()
       .then((result) => {
-        if (active) {
-          setMonitors(result)
-          setError(null)
+        if (!active) {
+          return
         }
+
+        setMonitors(result)
+        setError(null)
       })
       .catch((caughtError) => {
         if (!active) {
@@ -245,10 +247,25 @@ export function DashboardPage() {
     )
 
     try {
-      const checkResult =
+      const response =
         await runMonitorCheck(
           monitor.id,
         )
+
+      const checkResult =
+        response.check_result
+
+      const updatedMonitor =
+        response.monitor
+
+      if (
+        !checkResult
+        || !updatedMonitor
+      ) {
+        throw new Error(
+          'Invalid check response.',
+        )
+      }
 
       setLatestChecks(
         (current) => ({
@@ -262,13 +279,8 @@ export function DashboardPage() {
           current.map(
             (currentMonitor) => (
               currentMonitor.id
-              === monitor.id
-                ? {
-                    ...currentMonitor,
-                    last_checked_at:
-                      checkResult
-                        .checked_at,
-                  }
+              === updatedMonitor.id
+                ? updatedMonitor
                 : currentMonitor
             ),
           )
@@ -280,7 +292,9 @@ export function DashboardPage() {
       setError(
         caughtError instanceof ApiError
           ? caughtError.message
-          : 'Unable to check monitor.',
+          : caughtError instanceof Error
+            ? caughtError.message
+            : 'Unable to check monitor.',
       )
     } finally {
       setCheckingMonitorIds(
@@ -298,9 +312,10 @@ export function DashboardPage() {
   async function handleDelete(
     monitor: Monitor,
   ) {
-    const confirmed = window.confirm(
-      `Delete "${monitor.name}"?`,
-    )
+    const confirmed =
+      window.confirm(
+        `Delete "${monitor.name}"?`,
+      )
 
     if (!confirmed) {
       return
@@ -464,6 +479,9 @@ export function DashboardPage() {
                   monitor,
                 )
 
+              const statusClass =
+                status.toLowerCase()
+
               const latestCheck =
                 latestChecks[
                   monitor.id
@@ -489,9 +507,7 @@ export function DashboardPage() {
 
                         <span
                           className={
-                            `monitor-status monitor-status--${
-                              status.toLowerCase()
-                            }`
+                            `monitor-status monitor-status--${statusClass}`
                           }
                         >
                           {status}
@@ -529,13 +545,10 @@ export function DashboardPage() {
                       </span>
                     </div>
 
-                    {latestCheck && (
+                    {latestCheck?.result && (
                       <div
                         className={
-                          `raw-check raw-check--${
-                            latestCheck.result
-                              .toLowerCase()
-                          }`
+                          `raw-check raw-check--${latestCheck.result.toLowerCase()}`
                         }
                       >
                         <span>

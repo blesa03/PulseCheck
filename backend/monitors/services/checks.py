@@ -8,6 +8,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from monitors.models import CheckResult, Monitor
+from monitors.services.states import (
+    apply_check_result_state,
+)
 
 MAX_REDIRECTS = 5
 
@@ -183,22 +186,31 @@ def record_check_result(
     monitor: Monitor,
     outcome: HttpCheckOutcome,
 ) -> CheckResult:
-    check_result = CheckResult.objects.create(
-        monitor=monitor,
-        result=outcome.result,
-        http_status=outcome.http_status,
-        response_time_ms=(outcome.response_time_ms),
-        error_type=outcome.error_type,
-        checked_at=outcome.checked_at,
-    )
-
-    Monitor.objects.filter(
+    locked_monitor = Monitor.objects.select_for_update().get(
         pk=monitor.pk,
-    ).update(
-        last_checked_at=(outcome.checked_at),
     )
 
-    monitor.last_checked_at = outcome.checked_at
+    check_result = CheckResult.objects.create(
+        monitor=locked_monitor,
+        result=outcome.result,
+        http_status=(outcome.http_status),
+        response_time_ms=(outcome.response_time_ms),
+        error_type=(outcome.error_type),
+        checked_at=(outcome.checked_at),
+    )
+
+    apply_check_result_state(
+        locked_monitor,
+        check_result,
+    )
+
+    monitor.status = locked_monitor.status
+
+    monitor.consecutive_failures = locked_monitor.consecutive_failures
+
+    monitor.consecutive_successes = locked_monitor.consecutive_successes
+
+    monitor.last_checked_at = locked_monitor.last_checked_at
 
     return check_result
 
