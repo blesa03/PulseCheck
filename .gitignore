@@ -26,8 +26,7 @@ media/
 staticfiles/
 
 # Celery
-celerybeat-schedule
-celerybeat-schedule.*
+celerybeat-schedule*
 
 # Node
 node_modules/

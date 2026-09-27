@@ -19,6 +19,7 @@ import {
 } from 'vitest'
 
 import App from './App'
+
 import {
   AuthProvider,
 } from './auth/AuthProvider'
@@ -30,13 +31,27 @@ function response(
 ): Response {
   return {
     ok:
-      status >= 200 &&
-      status < 300,
+      status >= 200
+      && status < 300,
 
     status,
 
     json: async () => body,
   } as Response
+}
+
+
+function authSession() {
+  return {
+    access: 'access-token',
+
+    user: {
+      id: 1,
+      email: 'user@example.com',
+      date_joined:
+        '2026-09-25T00:00:00Z',
+    },
+  }
 }
 
 
@@ -94,23 +109,42 @@ describe('authentication flow', () => {
   )
 
   it(
-    'restores an authenticated session from the refresh cookie',
+    'restores an authenticated session and loads the dashboard',
     async () => {
+      const fetchMock = vi.fn(
+        async (
+          input: RequestInfo | URL,
+        ) => {
+          const url =
+            String(input)
+
+          if (
+            url.endsWith(
+              '/auth/refresh/',
+            )
+          ) {
+            return response(
+              authSession(),
+            )
+          }
+
+          if (
+            url.endsWith(
+              '/monitors/',
+            )
+          ) {
+            return response([])
+          }
+
+          throw new Error(
+            `Unexpected request: ${url}`,
+          )
+        },
+      )
+
       vi.stubGlobal(
         'fetch',
-        vi.fn().mockResolvedValue(
-          response({
-            access:
-              'access-token',
-            user: {
-              id: 1,
-              email:
-                'user@example.com',
-              date_joined:
-                '2026-09-25T00:00:00Z',
-            },
-          }),
-        ),
+        fetchMock,
       )
 
       renderApp('/dashboard')
@@ -122,11 +156,21 @@ describe('authentication flow', () => {
       ).toBeDefined()
 
       expect(
-        screen.getByRole(
+        await screen.findByRole(
           'heading',
           {
             name:
-              'Your dashboard',
+              'Your monitors',
+          },
+        ),
+      ).toBeDefined()
+
+      expect(
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              'No monitors yet',
           },
         ),
       ).toBeDefined()
@@ -158,20 +202,21 @@ describe('authentication flow', () => {
           if (
             url.endsWith(
               '/auth/login/',
-            ) &&
-            init?.method === 'POST'
+            )
+            && init?.method
+              === 'POST'
           ) {
-            return response({
-              access:
-                'access-token',
-              user: {
-                id: 1,
-                email:
-                  'user@example.com',
-                date_joined:
-                  '2026-09-25T00:00:00Z',
-              },
-            })
+            return response(
+              authSession(),
+            )
+          }
+
+          if (
+            url.endsWith(
+              '/monitors/',
+            )
+          ) {
+            return response([])
           }
 
           throw new Error(
@@ -234,6 +279,15 @@ describe('authentication flow', () => {
           ),
         ).toBeDefined()
       })
+
+      expect(
+        await screen.findByRole(
+          'heading',
+          {
+            name: 'Your monitors',
+          },
+        ),
+      ).toBeDefined()
     },
   )
 })
