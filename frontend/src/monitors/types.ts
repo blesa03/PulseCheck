@@ -70,3 +70,31 @@ export interface MonitorWritePayload {
   accepted_status_ranges:
     StatusRange[]
 }
+
+export type CheckResultStatus =
+  | 'SUCCESS'
+  | 'FAILURE'
+
+
+export type CheckErrorType =
+  | 'TIMEOUT'
+  | 'DNS_ERROR'
+  | 'CONNECTION_ERROR'
+  | 'SSL_ERROR'
+  | 'TOO_MANY_REDIRECTS'
+
+
+export interface CheckResult {
+  id: number
+  monitor: number
+
+  result: CheckResultStatus
+
+  http_status: number | null
+  response_time_ms: number
+
+  error_type:
+    CheckErrorType | null
+
+  checked_at: string
+}

@@ -172,3 +172,69 @@ class Monitor(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.url})"
+
+
+class CheckResult(models.Model):
+    class Result(models.TextChoices):
+        SUCCESS = "SUCCESS", "Success"
+        FAILURE = "FAILURE", "Failure"
+
+    class ErrorType(models.TextChoices):
+        TIMEOUT = "TIMEOUT", "Timeout"
+        DNS_ERROR = "DNS_ERROR", "DNS error"
+        CONNECTION_ERROR = (
+            "CONNECTION_ERROR",
+            "Connection error",
+        )
+        SSL_ERROR = "SSL_ERROR", "SSL error"
+        TOO_MANY_REDIRECTS = (
+            "TOO_MANY_REDIRECTS",
+            "Too many redirects",
+        )
+
+    monitor = models.ForeignKey(
+        Monitor,
+        on_delete=models.CASCADE,
+        related_name="check_results",
+    )
+
+    result = models.CharField(
+        max_length=10,
+        choices=Result.choices,
+    )
+
+    http_status = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    response_time_ms = models.PositiveIntegerField()
+
+    error_type = models.CharField(
+        max_length=30,
+        choices=ErrorType.choices,
+        null=True,
+        blank=True,
+    )
+
+    checked_at = models.DateTimeField(
+        default=timezone.now,
+    )
+
+    class Meta:
+        ordering = [
+            "-checked_at",
+            "-id",
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "monitor",
+                    "-checked_at",
+                ],
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.monitor.name}: {self.result} at {self.checked_at}"

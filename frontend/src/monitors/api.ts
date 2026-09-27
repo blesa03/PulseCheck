@@ -5,6 +5,7 @@ import {
 } from '../api/client'
 
 import type {
+  CheckResult,
   Monitor,
   MonitorWritePayload,
 } from './types'
@@ -116,6 +117,17 @@ export function resumeMonitor(
 ) {
   return request<Monitor>(
     `/monitors/${id}/resume/`,
+    {
+      method: 'POST',
+    },
+  )
+}
+
+export function runMonitorCheck(
+  id: number,
+) {
+  return request<CheckResult>(
+    `/monitors/${id}/check/`,
     {
       method: 'POST',
     },
