@@ -430,3 +430,34 @@
     padding: 1.5rem;
   }
 }
+
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.raw-check {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: fit-content;
+  margin-top: 1rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  font-size: 0.82rem;
+}
+
+.raw-check span {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.raw-check--success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.raw-check--failure {
+  background: #fee2e2;
+  color: #991b1b;
+}

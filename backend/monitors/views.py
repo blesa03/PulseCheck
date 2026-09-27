@@ -6,7 +6,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from monitors.models import Monitor
-from monitors.serializers import MonitorSerializer
+from monitors.serializers import (
+    CheckResultSerializer,
+    MonitorSerializer,
+)
+from monitors.services.checks import (
+    MonitorCheckDisabled,
+    execute_monitor_check,
+)
 
 
 class MonitorViewSet(ModelViewSet):
@@ -89,4 +96,35 @@ class MonitorViewSet(ModelViewSet):
                 monitor,
             ).data,
             status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="check",
+    )
+    def check_now(
+        self,
+        request,
+        pk=None,
+    ):
+        monitor = self.get_object()
+
+        try:
+            check_result = execute_monitor_check(
+                monitor,
+            )
+        except MonitorCheckDisabled:
+            return Response(
+                {
+                    "detail": ("Paused monitors cannot be checked."),
+                },
+                status=(status.HTTP_409_CONFLICT),
+            )
+
+        return Response(
+            CheckResultSerializer(
+                check_result,
+            ).data,
+            status=status.HTTP_201_CREATED,
         )

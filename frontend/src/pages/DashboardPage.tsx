@@ -20,6 +20,7 @@ import {
   listMonitors,
   pauseMonitor,
   resumeMonitor,
+  runMonitorCheck,
 } from '../monitors/api'
 
 import {
@@ -27,6 +28,7 @@ import {
 } from '../monitors/MonitorForm'
 
 import type {
+  CheckResult,
   Monitor,
 } from '../monitors/types'
 
@@ -48,6 +50,23 @@ function monitorStatusLabel(
     DOWN: 'Down',
     PAUSED: 'Paused',
   }[monitor.status]
+}
+
+
+function checkResultLabel(
+  checkResult: CheckResult,
+) {
+  const outcome =
+    checkResult.http_status !== null
+      ? `HTTP ${checkResult.http_status}`
+      : checkResult.error_type
+        ?? 'Transport error'
+
+  return [
+    checkResult.result,
+    outcome,
+    `${checkResult.response_time_ms} ms`,
+  ].join(' · ')
 }
 
 
@@ -83,6 +102,18 @@ export function DashboardPage() {
     editingMonitor,
     setEditingMonitor,
   ] = useState<Monitor | null>(null)
+
+  const [
+    latestChecks,
+    setLatestChecks,
+  ] = useState<
+    Record<number, CheckResult>
+  >({})
+
+  const [
+    checkingMonitorIds,
+    setCheckingMonitorIds,
+  ] = useState<number[]>([])
 
   useEffect(() => {
     let active = true
@@ -174,11 +205,92 @@ export function DashboardPage() {
             )
 
       handleSaved(updated)
+
+      setLatestChecks(
+        (current) => {
+          const next = {
+            ...current,
+          }
+
+          delete next[monitor.id]
+
+          return next
+        },
+      )
+
+      setError(null)
     } catch (caughtError) {
       setError(
         caughtError instanceof ApiError
           ? caughtError.message
           : 'Unable to update monitor.',
+      )
+    }
+  }
+
+  async function handleCheck(
+    monitor: Monitor,
+  ) {
+    setCheckingMonitorIds(
+      (current) => (
+        current.includes(
+          monitor.id,
+        )
+          ? current
+          : [
+              ...current,
+              monitor.id,
+            ]
+      ),
+    )
+
+    try {
+      const checkResult =
+        await runMonitorCheck(
+          monitor.id,
+        )
+
+      setLatestChecks(
+        (current) => ({
+          ...current,
+          [monitor.id]: checkResult,
+        }),
+      )
+
+      setMonitors(
+        (current) => (
+          current.map(
+            (currentMonitor) => (
+              currentMonitor.id
+              === monitor.id
+                ? {
+                    ...currentMonitor,
+                    last_checked_at:
+                      checkResult
+                        .checked_at,
+                  }
+                : currentMonitor
+            ),
+          )
+        ),
+      )
+
+      setError(null)
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof ApiError
+          ? caughtError.message
+          : 'Unable to check monitor.',
+      )
+    } finally {
+      setCheckingMonitorIds(
+        (current) => (
+          current.filter(
+            (id) => (
+              id !== monitor.id
+            ),
+          )
+        ),
       )
     }
   }
@@ -208,6 +320,20 @@ export function DashboardPage() {
           )
         ),
       )
+
+      setLatestChecks(
+        (current) => {
+          const next = {
+            ...current,
+          }
+
+          delete next[monitor.id]
+
+          return next
+        },
+      )
+
+      setError(null)
     } catch (caughtError) {
       setError(
         caughtError instanceof ApiError
@@ -234,6 +360,7 @@ export function DashboardPage() {
 
           <p>
             Signed in as{' '}
+
             <strong>
               {user?.email}
             </strong>
@@ -337,6 +464,17 @@ export function DashboardPage() {
                   monitor,
                 )
 
+              const latestCheck =
+                latestChecks[
+                  monitor.id
+                ]
+
+              const checking =
+                checkingMonitorIds
+                  .includes(
+                    monitor.id,
+                  )
+
               return (
                 <article
                   key={monitor.id}
@@ -390,14 +528,54 @@ export function DashboardPage() {
                         {' '}success(es)
                       </span>
                     </div>
+
+                    {latestCheck && (
+                      <div
+                        className={
+                          `raw-check raw-check--${
+                            latestCheck.result
+                              .toLowerCase()
+                          }`
+                        }
+                      >
+                        <span>
+                          Raw check
+                        </span>
+
+                        <strong>
+                          {checkResultLabel(
+                            latestCheck,
+                          )}
+                        </strong>
+                      </div>
+                    )}
                   </div>
 
                   <div className="monitor-actions">
                     <button
                       type="button"
                       className="secondary-button"
+                      disabled={
+                        !monitor.enabled
+                        || checking
+                      }
+                      onClick={() => {
+                        void handleCheck(
+                          monitor,
+                        )
+                      }}
+                    >
+                      {checking
+                        ? 'Checking…'
+                        : 'Check now'}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="secondary-button"
                       onClick={() => {
                         setShowCreateForm(false)
+
                         setEditingMonitor(
                           monitor,
                         )

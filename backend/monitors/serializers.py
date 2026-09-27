@@ -4,7 +4,10 @@ from urllib.parse import urlsplit
 from django.utils import timezone
 from rest_framework import serializers
 
-from monitors.models import Monitor
+from monitors.models import (
+    CheckResult,
+    Monitor,
+)
 
 
 class MonitorSerializer(serializers.ModelSerializer):
@@ -223,3 +226,22 @@ class MonitorSerializer(serializers.ModelSerializer):
             )
 
         return monitor
+
+
+class CheckResultSerializer(
+    serializers.ModelSerializer,
+):
+    class Meta:
+        model = CheckResult
+
+        fields = (
+            "id",
+            "monitor",
+            "result",
+            "http_status",
+            "response_time_ms",
+            "error_type",
+            "checked_at",
+        )
+
+        read_only_fields = fields
