@@ -9,7 +9,11 @@ from monitors.models import Monitor
 from monitors.serializers import (
     CheckResultSerializer,
     IncidentSerializer,
+    MonitorMetricsQuerySerializer,
     MonitorSerializer,
+)
+from monitors.services.analytics import (
+    build_monitor_metrics,
 )
 from monitors.services.checks import (
     MonitorCheckDisabled,
@@ -153,5 +157,34 @@ class MonitorViewSet(ModelViewSet):
 
         return Response(
             serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+    )
+    def metrics(
+        self,
+        request,
+        pk=None,
+    ):
+        monitor = self.get_object()
+
+        query = MonitorMetricsQuerySerializer(
+            data=request.query_params,
+        )
+
+        query.is_valid(
+            raise_exception=True,
+        )
+
+        payload = build_monitor_metrics(
+            monitor,
+            query.validated_data["period"],
+        )
+
+        return Response(
+            payload,
             status=status.HTTP_200_OK,
         )
