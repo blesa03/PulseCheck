@@ -1286,6 +1286,18 @@ export function DashboardPage() {
                       <button
                         type="button"
                         className="secondary-button"
+                        onClick={() => {
+                          navigate(
+                            `/monitors/${monitor.id}`,
+                          )
+                        }}
+                      >
+                        Details
+                      </button>
+
+                      <button
+                        type="button"
+                        className="secondary-button"
                         disabled={
                           !monitor.enabled
                           || checking

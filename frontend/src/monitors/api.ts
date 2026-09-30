@@ -5,6 +5,8 @@ import {
 } from '../api/client'
 
 import type {
+  CheckResult,
+  Incident,
   MetricsPeriod,
   Monitor,
   MonitorCheckResponse,
@@ -143,5 +145,32 @@ export function getMonitorMetrics(
 ) {
   return request<MonitorMetrics>(
     `/monitors/${id}/metrics/?period=${period}`,
+  )
+}
+
+export function getMonitor(
+  id: number,
+) {
+  return request<Monitor>(
+    `/monitors/${id}/`,
+  )
+}
+
+
+export function getMonitorChecks(
+  id: number,
+  limit = 50,
+) {
+  return request<CheckResult[]>(
+    `/monitors/${id}/checks/?limit=${limit}`,
+  )
+}
+
+
+export function getMonitorIncidents(
+  id: number,
+) {
+  return request<Incident[]>(
+    `/monitors/${id}/incidents/`,
   )
 }

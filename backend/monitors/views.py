@@ -9,6 +9,7 @@ from monitors.models import Monitor
 from monitors.serializers import (
     CheckResultSerializer,
     IncidentSerializer,
+    MonitorChecksQuerySerializer,
     MonitorMetricsQuerySerializer,
     MonitorSerializer,
 )
@@ -137,6 +138,37 @@ class MonitorViewSet(ModelViewSet):
                 ).data,
             },
             status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+    )
+    def checks(
+        self,
+        request,
+        pk=None,
+    ):
+        monitor = self.get_object()
+
+        query = MonitorChecksQuerySerializer(
+            data=request.query_params,
+        )
+
+        query.is_valid(
+            raise_exception=True,
+        )
+
+        check_results = monitor.check_results.all()[: query.validated_data["limit"]]
+
+        serializer = CheckResultSerializer(
+            check_results,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
         )
 
     @action(

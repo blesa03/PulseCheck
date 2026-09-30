@@ -184,3 +184,14 @@ export interface MonitorMetrics {
 
   daily: MonitorDailyMetric[]
 }
+
+
+export interface Incident {
+  id: number
+  monitor: number
+
+  started_at: string
+  resolved_at: string | null
+
+  duration_seconds: number
+}

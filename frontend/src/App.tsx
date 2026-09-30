@@ -21,6 +21,10 @@ import {
   RegisterPage,
 } from './pages/RegisterPage'
 
+import {
+  MonitorDetailPage,
+} from './pages/MonitorDetailPage'
+
 import './App.css'
 
 
@@ -47,6 +51,11 @@ function App() {
         <Route
           path="/dashboard"
           element={<DashboardPage />}
+        />
+
+        <Route
+          path="/monitors/:monitorId"
+          element={<MonitorDetailPage />}
         />
       </Route>
 
