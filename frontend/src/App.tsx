@@ -25,12 +25,25 @@ import {
   MonitorDetailPage,
 } from './pages/MonitorDetailPage'
 
+import {
+  PublicStatusPage,
+} from './pages/PublicStatusPage'
+
+import {
+  StatusPageSettingsPage,
+} from './pages/StatusPageSettingsPage'
+
 import './App.css'
 
 
 function App() {
   return (
     <Routes>
+      <Route
+        path="/status/:slug"
+        element={<PublicStatusPage />}
+      />
+
       <Route
         element={<PublicOnly />}
       >
@@ -56,6 +69,13 @@ function App() {
         <Route
           path="/monitors/:monitorId"
           element={<MonitorDetailPage />}
+        />
+
+        <Route
+          path="/status-page"
+          element={
+            <StatusPageSettingsPage />
+          }
         />
       </Route>
 

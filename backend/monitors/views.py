@@ -1,17 +1,28 @@
+from django.shortcuts import (
+    get_object_or_404,
+)
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+)
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from monitors.models import Monitor
+from monitors.models import (
+    Monitor,
+    PublicStatusPage,
+)
 from monitors.serializers import (
     CheckResultSerializer,
     IncidentSerializer,
     MonitorChecksQuerySerializer,
     MonitorMetricsQuerySerializer,
     MonitorSerializer,
+    PublicStatusPageConfigSerializer,
 )
 from monitors.services.analytics import (
     build_monitor_metrics,
@@ -19,6 +30,9 @@ from monitors.services.analytics import (
 from monitors.services.checks import (
     MonitorCheckDisabled,
     execute_monitor_check,
+)
+from monitors.services.public_status import (
+    build_public_status_payload,
 )
 
 
@@ -218,5 +232,97 @@ class MonitorViewSet(ModelViewSet):
 
         return Response(
             payload,
+            status=status.HTTP_200_OK,
+        )
+
+
+class StatusPageConfigView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    @staticmethod
+    def get_page(user):
+        page, _ = PublicStatusPage.objects.get_or_create(
+            owner=user,
+        )
+
+        return page
+
+    def get(
+        self,
+        request,
+    ):
+        page = self.get_page(
+            request.user,
+        )
+
+        serializer = PublicStatusPageConfigSerializer(
+            page,
+            context={
+                "request": request,
+            },
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(
+        self,
+        request,
+    ):
+        page = self.get_page(
+            request.user,
+        )
+
+        serializer = PublicStatusPageConfigSerializer(
+            page,
+            data=request.data,
+            partial=True,
+            context={
+                "request": request,
+            },
+        )
+
+        serializer.is_valid(
+            raise_exception=True,
+        )
+
+        serializer.save()
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class PublicStatusPageView(APIView):
+    authentication_classes = []
+
+    permission_classes = [
+        AllowAny,
+    ]
+
+    def get(
+        self,
+        request,
+        slug,
+    ):
+        page = get_object_or_404(
+            PublicStatusPage.objects.select_related(
+                "owner",
+            ).prefetch_related(
+                "monitors",
+            ),
+            slug=slug.lower(),
+            enabled=True,
+        )
+
+        return Response(
+            build_public_status_payload(
+                page,
+            ),
             status=status.HTTP_200_OK,
         )

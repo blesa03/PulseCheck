@@ -5,6 +5,7 @@ from monitors.models import (
     DailyMetric,
     Incident,
     Monitor,
+    PublicStatusPage,
 )
 
 
@@ -124,3 +125,26 @@ class DailyMetricAdmin(
         "created_at",
         "updated_at",
     )
+
+
+@admin.register(PublicStatusPage)
+class PublicStatusPageAdmin(
+    admin.ModelAdmin,
+):
+    list_display = (
+        "title",
+        "slug",
+        "owner",
+        "enabled",
+        "updated_at",
+    )
+
+    list_filter = ("enabled",)
+
+    search_fields = (
+        "title",
+        "slug",
+        "owner__email",
+    )
+
+    filter_horizontal = ("monitors",)

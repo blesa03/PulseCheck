@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -383,3 +385,57 @@ class DailyMetric(models.Model):
 
     def __str__(self):
         return f"{self.monitor.name}: {self.date}"
+
+
+def default_public_status_slug():
+    return f"status-{uuid.uuid4().hex[:12]}"
+
+
+class PublicStatusPage(models.Model):
+    owner = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="public_status_page",
+    )
+
+    slug = models.SlugField(
+        max_length=80,
+        unique=True,
+        default=default_public_status_slug,
+    )
+
+    title = models.CharField(
+        max_length=120,
+        default="Service status",
+    )
+
+    description = models.CharField(
+        max_length=240,
+        blank=True,
+    )
+
+    enabled = models.BooleanField(
+        default=False,
+    )
+
+    monitors = models.ManyToManyField(
+        Monitor,
+        related_name="public_status_pages",
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "owner_id",
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.slug})"

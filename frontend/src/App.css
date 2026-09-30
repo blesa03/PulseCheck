@@ -1217,3 +1217,393 @@
     width: 100%;
   }
 }
+
+.status-settings-section {
+  margin-top: 3rem;
+}
+
+.status-settings-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.status-settings-card {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid #d7dce5;
+  border-radius: 1rem;
+  background: #ffffff;
+}
+
+.status-settings-card h2 {
+  margin: 0;
+}
+
+.status-settings-card label {
+  display: grid;
+  gap: 0.45rem;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.status-settings-card input,
+.status-settings-card textarea {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+}
+
+.status-settings-card input:focus,
+.status-settings-card textarea:focus {
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 3px
+    rgb(37 99 235 / 12%);
+}
+
+.slug-field {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+}
+
+.slug-field:focus-within {
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 3px
+    rgb(37 99 235 / 12%);
+}
+
+.slug-field span {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 0.8rem;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.slug-field input {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+
+.status-page-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-page-toggle input {
+  width: auto;
+}
+
+.status-page-toggle span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.status-page-toggle small {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.published-monitor-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.published-monitor-option {
+  display: flex !important;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.published-monitor-option input {
+  width: auto;
+}
+
+.published-monitor-option span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.published-monitor-option small {
+  color: #64748b;
+}
+
+.status-settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+  color: #334155;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secondary-link--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.save-success {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.7rem;
+  background: #ecfdf5;
+  color: #166534;
+  font-size: 0.9rem;
+}
+
+.public-status-shell {
+  width: min(100% - 2rem, 64rem);
+  margin: 0 auto;
+  padding: 3rem 0;
+}
+
+.public-status-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.public-status-header h1 {
+  margin: 0.8rem 0 0;
+  color: #0f172a;
+  font-size: 2.25rem;
+  letter-spacing: -0.04em;
+}
+
+.public-status-header p {
+  max-width: 38rem;
+  margin: 0.65rem 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.public-generated {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.public-overall-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding: 1rem 1.2rem;
+  border-radius: 0.9rem;
+  font-size: 0.95rem;
+}
+
+.public-status-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.public-overall-status--up {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.public-overall-status--degraded {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.public-overall-status--down {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.public-overall-status--pending,
+.public-overall-status--paused,
+.public-overall-status--no_data {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.public-status-section {
+  margin-top: 3rem;
+}
+
+.public-status-section h2 {
+  margin: 0.5rem 0 0;
+}
+
+.public-monitor-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.public-monitor-card {
+  padding: 1.25rem;
+  border: 1px solid #d7dce5;
+  border-radius: 1rem;
+  background: #ffffff;
+}
+
+.public-monitor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.public-monitor-heading > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.public-monitor-heading h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.public-uptime {
+  display: grid;
+  gap: 0.2rem;
+  text-align: right;
+}
+
+.public-uptime span {
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.public-uptime strong {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.public-history {
+  display: flex;
+  gap: 0.22rem;
+  height: 2.25rem;
+  margin-top: 1.1rem;
+}
+
+.public-history-day {
+  min-width: 0.35rem;
+  flex: 1;
+  border-radius: 0.2rem;
+}
+
+.public-history-day--up {
+  background: #22c55e;
+}
+
+.public-history-day--degraded {
+  background: #f59e0b;
+}
+
+.public-history-day--down {
+  background: #ef4444;
+}
+
+.public-history-day--unknown {
+  background: #cbd5e1;
+}
+
+.public-history-empty {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.public-last-check {
+  display: block;
+  margin-top: 0.8rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.public-no-incidents {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 1rem;
+  background: #f0fdf4;
+  color: #166534;
+  text-align: center;
+}
+
+.public-status-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.public-status-loading,
+.public-error-card {
+  margin-top: 6rem;
+  padding: 2rem;
+  border: 1px solid #d7dce5;
+  border-radius: 1rem;
+  background: #ffffff;
+  color: #64748b;
+  text-align: center;
+}
+
+.public-error-card h1 {
+  margin: 1rem 0 0;
+  color: #0f172a;
+}
+
+@media (max-width: 640px) {
+  .status-settings-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .status-settings-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .public-status-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-monitor-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-uptime {
+    text-align: left;
+  }
+}
