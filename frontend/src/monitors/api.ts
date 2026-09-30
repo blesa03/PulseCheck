@@ -5,8 +5,10 @@ import {
 } from '../api/client'
 
 import type {
+  MetricsPeriod,
   Monitor,
   MonitorCheckResponse,
+  MonitorMetrics,
   MonitorWritePayload,
 } from './types'
 
@@ -132,5 +134,14 @@ export function runMonitorCheck(
     {
       method: 'POST',
     },
+  )
+}
+
+export function getMonitorMetrics(
+  id: number,
+  period: MetricsPeriod = '24h',
+) {
+  return request<MonitorMetrics>(
+    `/monitors/${id}/metrics/?period=${period}`,
   )
 }

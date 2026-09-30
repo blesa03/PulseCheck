@@ -103,3 +103,84 @@ export interface MonitorCheckResponse {
   check_result: CheckResult
   monitor: Monitor
 }
+
+export type MetricsPeriod =
+  | '24h'
+  | '7d'
+  | '30d'
+  | 'all'
+
+
+export interface MonitorMetricsWindow {
+  start: string
+  end: string
+}
+
+
+export interface MonitorUptimeMetrics {
+  percentage: number | null
+  window_seconds: number
+  downtime_seconds: number
+}
+
+
+export interface MonitorCheckMetrics {
+  total: number
+  successful: number
+  failed: number
+  success_percentage: number | null
+}
+
+
+export interface MonitorLatencyMetrics {
+  average_ms: number | null
+  min_ms: number | null
+  max_ms: number | null
+}
+
+
+export interface MonitorIncidentMetrics {
+  count: number
+  open_count: number
+}
+
+
+export interface MonitorDailyMetric {
+  date: string
+
+  total_checks: number
+  successful_checks: number
+  failed_checks: number
+
+  check_success_percentage:
+    number | null
+
+  average_response_time_ms:
+    number | null
+
+  min_response_time_ms:
+    number | null
+
+  max_response_time_ms:
+    number | null
+
+  uptime_percentage:
+    number | null
+
+  window_seconds: number
+  downtime_seconds: number
+}
+
+
+export interface MonitorMetrics {
+  monitor_id: number
+  period: MetricsPeriod
+
+  window: MonitorMetricsWindow
+  uptime: MonitorUptimeMetrics
+  checks: MonitorCheckMetrics
+  latency: MonitorLatencyMetrics
+  incidents: MonitorIncidentMetrics
+
+  daily: MonitorDailyMetric[]
+}
