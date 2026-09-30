@@ -209,3 +209,16 @@ CELERY_RESULT_BACKEND = os.getenv(
 )
 
 CELERY_TIMEZONE = TIME_ZONE
+
+MONITOR_DISPATCH_BATCH_SIZE = env_int(
+    "MONITOR_DISPATCH_BATCH_SIZE",
+    200,
+)
+
+
+CELERY_BEAT_SCHEDULE = {
+    "monitor-dispatcher": {
+        "task": ("monitors.dispatch_due_monitors"),
+        "schedule": 30.0,
+    },
+}
