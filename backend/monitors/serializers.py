@@ -282,3 +282,14 @@ class MonitorMetricsQuerySerializer(
         default="24h",
         required=False,
     )
+
+
+class MonitorChecksQuerySerializer(
+    serializers.Serializer,
+):
+    limit = serializers.IntegerField(
+        min_value=1,
+        max_value=100,
+        default=50,
+        required=False,
+    )
