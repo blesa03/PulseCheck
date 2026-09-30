@@ -8,6 +8,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from monitors.models import CheckResult, Monitor
+from monitors.services.metrics import (
+    update_daily_metric,
+)
 from monitors.services.states import (
     apply_check_result_state,
 )
@@ -197,6 +200,11 @@ def record_check_result(
         response_time_ms=(outcome.response_time_ms),
         error_type=(outcome.error_type),
         checked_at=(outcome.checked_at),
+    )
+
+    update_daily_metric(
+        locked_monitor,
+        check_result,
     )
 
     apply_check_result_state(

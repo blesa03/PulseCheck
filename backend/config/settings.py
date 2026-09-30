@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -215,10 +217,21 @@ MONITOR_DISPATCH_BATCH_SIZE = env_int(
     200,
 )
 
+CHECK_RETENTION_DELETE_BATCH_SIZE = env_int(
+    "CHECK_RETENTION_DELETE_BATCH_SIZE",
+    5000,
+)
 
 CELERY_BEAT_SCHEDULE = {
     "monitor-dispatcher": {
         "task": ("monitors.dispatch_due_monitors"),
         "schedule": 30.0,
+    },
+    "check-result-retention": {
+        "task": ("monitors.purge_expired_check_results"),
+        "schedule": crontab(
+            hour=3,
+            minute=15,
+        ),
     },
 }

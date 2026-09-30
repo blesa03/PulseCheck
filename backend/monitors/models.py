@@ -309,3 +309,77 @@ class Incident(models.Model):
         state = "open" if self.resolved_at is None else "resolved"
 
         return f"{self.monitor.name}: {state} incident"
+
+
+class DailyMetric(models.Model):
+    monitor = models.ForeignKey(
+        Monitor,
+        on_delete=models.CASCADE,
+        related_name="daily_metrics",
+    )
+
+    date = models.DateField()
+
+    total_checks = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    successful_checks = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    failed_checks = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    total_response_time_ms = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    min_response_time_ms = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    max_response_time_ms = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-date",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "monitor",
+                    "date",
+                ],
+                name="unique_daily_metric_monitor_date",
+            ),
+        ]
+
+    @property
+    def average_response_time_ms(
+        self,
+    ) -> float | None:
+        if self.total_checks == 0:
+            return None
+
+        return round(
+            self.total_response_time_ms / self.total_checks,
+            2,
+        )
+
+    def __str__(self):
+        return f"{self.monitor.name}: {self.date}"
