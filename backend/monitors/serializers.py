@@ -267,3 +267,18 @@ class IncidentSerializer(
         )
 
         read_only_fields = fields
+
+
+class MonitorMetricsQuerySerializer(
+    serializers.Serializer,
+):
+    period = serializers.ChoiceField(
+        choices=(
+            "24h",
+            "7d",
+            "30d",
+            "all",
+        ),
+        default="24h",
+        required=False,
+    )
