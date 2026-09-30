@@ -11,6 +11,9 @@ from monitors.services.checks import (
     MonitorCheckDisabled,
     execute_monitor_check,
 )
+from monitors.services.retention import (
+    purge_expired_check_results as purge_check_results_by_retention,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -170,3 +173,10 @@ def dispatch_due_monitors():
         "dispatched": dispatched,
         "enqueue_failures": (enqueue_failures),
     }
+
+
+@shared_task(
+    name="monitors.purge_expired_check_results",
+)
+def purge_expired_check_results():
+    return purge_check_results_by_retention()

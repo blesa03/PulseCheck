@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from monitors.models import (
     CheckResult,
+    DailyMetric,
     Incident,
     Monitor,
 )
@@ -85,4 +86,41 @@ class IncidentAdmin(admin.ModelAdmin):
         "started_at",
         "resolved_at",
         "duration_seconds",
+    )
+
+
+@admin.register(DailyMetric)
+class DailyMetricAdmin(
+    admin.ModelAdmin,
+):
+    list_display = (
+        "monitor",
+        "date",
+        "total_checks",
+        "successful_checks",
+        "failed_checks",
+        "average_response_time_ms",
+        "min_response_time_ms",
+        "max_response_time_ms",
+    )
+
+    list_filter = ("date",)
+
+    search_fields = (
+        "monitor__name",
+        "monitor__url",
+        "monitor__owner__email",
+    )
+
+    readonly_fields = (
+        "monitor",
+        "date",
+        "total_checks",
+        "successful_checks",
+        "failed_checks",
+        "total_response_time_ms",
+        "min_response_time_ms",
+        "max_response_time_ms",
+        "created_at",
+        "updated_at",
     )
