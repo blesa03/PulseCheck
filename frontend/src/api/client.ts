@@ -268,3 +268,16 @@ export async function apiFetch(
 
   return response
 }
+
+export async function publicApiFetch(
+  path: string,
+  init: RequestInit = {},
+) {
+  return fetch(
+    `${API_URL}${path}`,
+    {
+      ...init,
+      credentials: 'omit',
+    },
+  )
+}

@@ -8,6 +8,7 @@ from monitors.models import (
     CheckResult,
     Incident,
     Monitor,
+    PublicStatusPage,
 )
 
 
@@ -293,3 +294,123 @@ class MonitorChecksQuerySerializer(
         default=50,
         required=False,
     )
+
+
+class PublicStatusPageConfigSerializer(
+    serializers.ModelSerializer,
+):
+    monitor_ids = serializers.PrimaryKeyRelatedField(
+        source="monitors",
+        many=True,
+        required=False,
+        queryset=Monitor.objects.none(),
+    )
+
+    class Meta:
+        model = PublicStatusPage
+
+        fields = (
+            "id",
+            "title",
+            "description",
+            "slug",
+            "enabled",
+            "monitor_ids",
+            "created_at",
+            "updated_at",
+        )
+
+        read_only_fields = (
+            "id",
+            "created_at",
+            "updated_at",
+        )
+
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            **kwargs,
+        )
+
+        request = self.context.get(
+            "request",
+        )
+
+        if request and request.user.is_authenticated:
+            monitor_ids_field = self.fields["monitor_ids"]
+
+            monitor_ids_field.child_relation.queryset = Monitor.objects.filter(
+                owner=request.user,
+            )
+
+    def validate_title(
+        self,
+        value,
+    ):
+        title = value.strip()
+
+        if not title:
+            raise serializers.ValidationError(
+                ("Status page title cannot be empty."),
+            )
+
+        return title
+
+    def validate_description(
+        self,
+        value,
+    ):
+        return value.strip()
+
+    def validate_slug(
+        self,
+        value,
+    ):
+        slug = value.strip().lower()
+
+        if len(slug) < 3:
+            raise serializers.ValidationError(
+                ("Status page slug must contain at least 3 characters."),
+            )
+
+        queryset = PublicStatusPage.objects.filter(
+            slug=slug,
+        )
+
+        if self.instance:
+            queryset = queryset.exclude(
+                pk=self.instance.pk,
+            )
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                ("This status page slug is already in use."),
+            )
+
+        return slug
+
+    def update(
+        self,
+        instance,
+        validated_data,
+    ):
+        monitors = validated_data.pop(
+            "monitors",
+            None,
+        )
+
+        instance = super().update(
+            instance,
+            validated_data,
+        )
+
+        if monitors is not None:
+            instance.monitors.set(
+                monitors,
+            )
+
+        return instance

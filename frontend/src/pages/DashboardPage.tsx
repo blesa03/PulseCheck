@@ -820,6 +820,16 @@ export function DashboardPage() {
         <div className="header-actions">
           <button
             type="button"
+            className="secondary-button"
+            onClick={() => {
+              navigate('/status-page')
+            }}
+          >
+            Status page
+          </button>
+
+          <button
+            type="button"
             className="primary-button"
             onClick={() => {
               setEditingMonitor(null)
