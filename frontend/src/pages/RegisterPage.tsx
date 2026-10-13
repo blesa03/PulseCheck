@@ -1,63 +1,30 @@
-import {
-  useState,
-} from 'react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
-import {
-  Link,
-  useNavigate,
-} from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
+import { errorMessage, t, useLanguage } from '../i18n'
+import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 
-import {
-  ApiError,
-} from '../api/client'
-
-import {
-  useAuth,
-} from '../auth/useAuth'
-
-import type {
-  FormEvent,
-} from 'react'
-
+import type { FormEvent } from 'react'
 
 export function RegisterPage() {
-  const {
-    register,
-  } = useAuth()
+  useLanguage()
 
+  const { register } = useAuth()
   const navigate = useNavigate()
 
-  const [email, setEmail] =
-    useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [password, setPassword] =
-    useState('')
-
-  const [
-    passwordConfirm,
-    setPasswordConfirm,
-  ] = useState('')
-
-  const [error, setError] =
-    useState<string | null>(null)
-
-  const [
-    isSubmitting,
-    setIsSubmitting,
-  ] = useState(false)
-
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
     setError(null)
 
     if (password !== passwordConfirm) {
-      setError(
-        'Passwords do not match.',
-      )
-
+      setError(t('Passwords do not match.'))
       return
     }
 
@@ -67,22 +34,11 @@ export function RegisterPage() {
       await register({
         email,
         password,
-        password_confirm:
-          passwordConfirm,
+        password_confirm: passwordConfirm,
       })
-
-      navigate(
-        '/dashboard',
-        {
-          replace: true,
-        },
-      )
+      navigate('/dashboard', { replace: true })
     } catch (caughtError) {
-      setError(
-        caughtError instanceof ApiError
-          ? caughtError.message
-          : 'Unable to create the account.',
-      )
+      setError(errorMessage(caughtError, 'Unable to create the account.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -91,94 +47,59 @@ export function RegisterPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <div className="brand">
-          PulseCheck
-        </div>
-
-        <h1>Create account</h1>
-
+        <div className="brand">PulseCheck</div>
+        <h1>{t('Create account')}</h1>
         <p className="auth-description">
-          Start monitoring your services.
+          {t('Start monitoring your services.')}
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="auth-form"
-        >
+        <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            Email
-
+            {t('Email')}
             <input
               type="email"
               value={email}
-              onChange={(event) => {
-                setEmail(
-                  event.target.value,
-                )
-              }}
+              onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
             />
           </label>
 
           <label>
-            Password
-
+            {t('Password')}
             <input
               type="password"
               value={password}
-              onChange={(event) => {
-                setPassword(
-                  event.target.value,
-                )
-              }}
+              onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
               required
             />
           </label>
 
           <label>
-            Confirm password
-
+            {t('Confirm password')}
             <input
               type="password"
               value={passwordConfirm}
-              onChange={(event) => {
-                setPasswordConfirm(
-                  event.target.value,
-                )
-              }}
+              onChange={(event) => setPasswordConfirm(event.target.value)}
               autoComplete="new-password"
               required
             />
           </label>
 
-          {error && (
-            <p
-              className="form-error"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
+          {error && <p className="form-error" role="alert">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting
-              ? 'Creating account…'
-              : 'Create account'}
+          <button type="submit" disabled={isSubmitting}>
+            {t(isSubmitting ? 'Creating account…' : 'Create account')}
           </button>
         </form>
 
         <p className="auth-switch">
-          Already registered?{' '}
-
-          <Link to="/login">
-            Sign in
-          </Link>
+          {t('Already registered?')}{' '}
+          <Link to="/login">{t('Sign in')}</Link>
         </p>
+
+        <LanguageSwitcher />
       </section>
     </main>
   )

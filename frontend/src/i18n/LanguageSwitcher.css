@@ -1,0 +1,22 @@
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.language-switcher select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.language-switcher select:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
