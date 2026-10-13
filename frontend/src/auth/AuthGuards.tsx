@@ -1,10 +1,14 @@
 import { Navigate, Outlet } from 'react-router-dom'
+
+import { t, useLanguage } from '../i18n'
 import { useAuth } from './useAuth'
 
 function SessionLoading() {
+  useLanguage()
+
   return (
     <main className="auth-loading" role="status" aria-live="polite">
-      Restoring session…
+      {t('Restoring session…')}
     </main>
   )
 }
