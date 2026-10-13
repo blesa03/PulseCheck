@@ -38,11 +38,7 @@
 
 <br>
 
-<img
-  src="docs/screenshots/01-dashboard.png"
-  alt="PulseCheck monitoring dashboard"
-  width="100%"
->
+<img src="docs/screenshots/01-dashboard.png" alt="PulseCheck monitoring dashboard" width="100%">
 
 <sub>Dashboard populated with synthetic demonstration data.</sub>
 
