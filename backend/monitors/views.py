@@ -1,328 +1,197 @@
-from django.shortcuts import (
-    get_object_or_404,
-)
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from monitors.models import (
-    Monitor,
-    PublicStatusPage,
-)
+from monitors.models import Monitor, PublicStatusPage
 from monitors.serializers import (
     CheckResultSerializer,
     IncidentSerializer,
     MonitorChecksQuerySerializer,
+    MonitorIncidentsQuerySerializer,
     MonitorMetricsQuerySerializer,
     MonitorSerializer,
     PublicStatusPageConfigSerializer,
 )
-from monitors.services.analytics import (
-    build_monitor_metrics,
-)
+from monitors.services.analytics import build_monitor_metrics
 from monitors.services.checks import (
     MonitorCheckDisabled,
+    MonitorCheckObsolete,
     execute_monitor_check,
 )
-from monitors.services.public_status import (
-    build_public_status_payload,
-)
+from monitors.services.public_status import build_public_status_payload
 
 
 class MonitorViewSet(ModelViewSet):
     serializer_class = MonitorSerializer
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [IsAuthenticated]
+
+    # Required by DRF to accept throttle_scope in @action.
+    throttle_scope = None
 
     def get_queryset(self):
-        return Monitor.objects.filter(
-            owner=self.request.user,
-        )
+        return Monitor.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(
-            owner=self.request.user,
-        )
+        serializer.save(owner=self.request.user)
 
-    @action(
-        detail=True,
-        methods=["post"],
-    )
+    @transaction.atomic
+    @action(detail=True, methods=["post"])
     def pause(self, request, pk=None):
-        monitor = self.get_object()
+        monitor = Monitor.objects.select_for_update().get(pk=self.get_object().pk)
 
-        monitor.enabled = False
-        monitor.status = Monitor.Status.PAUSED
+        if monitor.enabled or monitor.status != Monitor.Status.PAUSED:
+            monitor.enabled = False
+            monitor.status = Monitor.Status.PAUSED
+            monitor.consecutive_failures = 0
+            monitor.consecutive_successes = 0
+            monitor.next_check_at = None
+            monitor.config_version += 1
+            monitor.save()
 
-        monitor.consecutive_failures = 0
-        monitor.consecutive_successes = 0
+        return Response(self.get_serializer(monitor).data)
 
-        monitor.next_check_at = None
-
-        monitor.save(
-            update_fields=[
-                "enabled",
-                "status",
-                "consecutive_failures",
-                "consecutive_successes",
-                "next_check_at",
-                "updated_at",
-            ]
-        )
-
-        return Response(
-            self.get_serializer(
-                monitor,
-            ).data,
-            status=status.HTTP_200_OK,
-        )
-
-    @action(
-        detail=True,
-        methods=["post"],
-    )
+    @transaction.atomic
+    @action(detail=True, methods=["post"])
     def resume(self, request, pk=None):
-        monitor = self.get_object()
+        monitor = Monitor.objects.select_for_update().get(pk=self.get_object().pk)
 
-        monitor.enabled = True
-        monitor.status = None
+        if not monitor.enabled:
+            monitor.enabled = True
+            monitor.status = None
+            monitor.consecutive_failures = 0
+            monitor.consecutive_successes = 0
+            monitor.next_check_at = timezone.now()
+            monitor.config_version += 1
+            monitor.save()
 
-        monitor.consecutive_failures = 0
-        monitor.consecutive_successes = 0
-
-        monitor.next_check_at = timezone.now()
-
-        monitor.save(
-            update_fields=[
-                "enabled",
-                "status",
-                "consecutive_failures",
-                "consecutive_successes",
-                "next_check_at",
-                "updated_at",
-            ]
-        )
-
-        return Response(
-            self.get_serializer(
-                monitor,
-            ).data,
-            status=status.HTTP_200_OK,
-        )
+        return Response(self.get_serializer(monitor).data)
 
     @action(
         detail=True,
         methods=["post"],
         url_path="check",
+        throttle_classes=[ScopedRateThrottle],
+        throttle_scope="manual_check",
     )
-    def check_now(
-        self,
-        request,
-        pk=None,
-    ):
+    def check_now(self, request, pk=None):
         monitor = self.get_object()
 
         try:
-            check_result = execute_monitor_check(
-                monitor,
-            )
-        except MonitorCheckDisabled:
+            check_result = execute_monitor_check(monitor)
+        except (MonitorCheckDisabled, MonitorCheckObsolete):
             return Response(
                 {
-                    "detail": ("Paused monitors cannot be checked."),
+                    "detail": ("Monitor was disabled or changed during the check."),
                 },
                 status=status.HTTP_409_CONFLICT,
             )
 
         return Response(
             {
-                "check_result": CheckResultSerializer(
-                    check_result,
-                ).data,
-                "monitor": MonitorSerializer(
-                    monitor,
-                ).data,
+                "check_result": CheckResultSerializer(check_result).data,
+                "monitor": MonitorSerializer(monitor).data,
             },
             status=status.HTTP_201_CREATED,
         )
 
-    @action(
-        detail=True,
-        methods=["get"],
-    )
-    def checks(
-        self,
-        request,
-        pk=None,
-    ):
+    @action(detail=True, methods=["get"])
+    def checks(self, request, pk=None):
         monitor = self.get_object()
 
-        query = MonitorChecksQuerySerializer(
-            data=request.query_params,
-        )
-
-        query.is_valid(
-            raise_exception=True,
-        )
+        query = MonitorChecksQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
 
         check_results = monitor.check_results.all()[: query.validated_data["limit"]]
 
-        serializer = CheckResultSerializer(
-            check_results,
-            many=True,
-        )
-
         return Response(
-            serializer.data,
-            status=status.HTTP_200_OK,
+            CheckResultSerializer(
+                check_results,
+                many=True,
+            ).data
         )
 
-    @action(
-        detail=True,
-        methods=["get"],
-    )
-    def incidents(
-        self,
-        request,
-        pk=None,
-    ):
+    @action(detail=True, methods=["get"])
+    def incidents(self, request, pk=None):
         monitor = self.get_object()
 
-        serializer = IncidentSerializer(
-            monitor.incidents.all(),
-            many=True,
-        )
+        query = MonitorIncidentsQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+
+        items = monitor.incidents.all()[: query.validated_data["limit"]]
 
         return Response(
-            serializer.data,
-            status=status.HTTP_200_OK,
+            IncidentSerializer(
+                items,
+                many=True,
+            ).data
         )
 
-    @action(
-        detail=True,
-        methods=["get"],
-    )
-    def metrics(
-        self,
-        request,
-        pk=None,
-    ):
+    @action(detail=True, methods=["get"])
+    def metrics(self, request, pk=None):
         monitor = self.get_object()
 
-        query = MonitorMetricsQuerySerializer(
-            data=request.query_params,
-        )
-
-        query.is_valid(
-            raise_exception=True,
-        )
-
-        payload = build_monitor_metrics(
-            monitor,
-            query.validated_data["period"],
-        )
+        query = MonitorMetricsQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
 
         return Response(
-            payload,
-            status=status.HTTP_200_OK,
+            build_monitor_metrics(
+                monitor,
+                query.validated_data["period"],
+            )
         )
 
 
 class StatusPageConfigView(APIView):
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [IsAuthenticated]
 
     @staticmethod
     def get_page(user):
-        page, _ = PublicStatusPage.objects.get_or_create(
-            owner=user,
-        )
-
+        page, _ = PublicStatusPage.objects.get_or_create(owner=user)
         return page
 
-    def get(
-        self,
-        request,
-    ):
-        page = self.get_page(
-            request.user,
-        )
+    def get(self, request):
+        page = self.get_page(request.user)
 
         serializer = PublicStatusPageConfigSerializer(
             page,
-            context={
-                "request": request,
-            },
+            context={"request": request},
         )
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK,
-        )
+        return Response(serializer.data)
 
-    def patch(
-        self,
-        request,
-    ):
-        page = self.get_page(
-            request.user,
-        )
+    def patch(self, request):
+        page = self.get_page(request.user)
 
         serializer = PublicStatusPageConfigSerializer(
             page,
             data=request.data,
             partial=True,
-            context={
-                "request": request,
-            },
+            context={"request": request},
         )
-
-        serializer.is_valid(
-            raise_exception=True,
-        )
-
+        serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK,
-        )
+        return Response(serializer.data)
 
 
 class PublicStatusPageView(APIView):
     authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "public_status"
 
-    permission_classes = [
-        AllowAny,
-    ]
-
-    def get(
-        self,
-        request,
-        slug,
-    ):
+    def get(self, request, slug):
         page = get_object_or_404(
-            PublicStatusPage.objects.select_related(
-                "owner",
-            ).prefetch_related(
-                "monitors",
-            ),
+            PublicStatusPage,
             slug=slug.lower(),
             enabled=True,
         )
 
-        return Response(
-            build_public_status_payload(
-                page,
-            ),
-            status=status.HTTP_200_OK,
-        )
+        return Response(build_public_status_payload(page))
