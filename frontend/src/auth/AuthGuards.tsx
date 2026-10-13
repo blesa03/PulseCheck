@@ -1,58 +1,26 @@
-import {
-  Navigate,
-  Outlet,
-} from 'react-router-dom'
-
+import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from './useAuth'
 
+function SessionLoading() {
+  return (
+    <main className="auth-loading" role="status" aria-live="polite">
+      Restoring session…
+    </main>
+  )
+}
 
 export function RequireAuth() {
-  const {
-    status,
-  } = useAuth()
+  const { status } = useAuth()
 
-  if (status === 'initializing') {
-    return (
-      <main className="auth-loading">
-        Restoring session…
-      </main>
-    )
-  }
-
-  if (status !== 'authenticated') {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    )
-  }
-
+  if (status === 'initializing') return <SessionLoading />
+  if (status !== 'authenticated') return <Navigate to="/login" replace />
   return <Outlet />
 }
 
-
 export function PublicOnly() {
-  const {
-    status,
-  } = useAuth()
+  const { status } = useAuth()
 
-  if (status === 'initializing') {
-    return (
-      <main className="auth-loading">
-        Restoring session…
-      </main>
-    )
-  }
-
-  if (status === 'authenticated') {
-    return (
-      <Navigate
-        to="/dashboard"
-        replace
-      />
-    )
-  }
-
+  if (status === 'initializing') return <SessionLoading />
+  if (status === 'authenticated') return <Navigate to="/dashboard" replace />
   return <Outlet />
 }

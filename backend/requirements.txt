@@ -6,3 +6,5 @@ redis==8.1.0
 django-cors-headers==4.9.0
 PyJWT==2.15.0
 httpx==0.28.1
+gunicorn==23.0.0
+whitenoise==6.9.0
